@@ -14,7 +14,7 @@
                 </v-card-title>
                 <v-card-text>
                     <v-container>
-                        <v-row>
+                        <v-row v-if="dialog">
                             <v-col v-for="(value, field) in employeeInfo" :key="field" cols="12">
                                 <v-text-field v-if="field === 'email'"
                                     :label="fields[field]['text']"
@@ -30,13 +30,11 @@
                                     v-model.trim.lazy.number="employeeInfo[field]"
                                 ></v-text-field>
                                 <v-select v-else-if="field === 'position_id'"
-                                    v-model.trim.lazy="employeeInfo[field]"
                                     :label="fields[field]['text']"
                                     :items="positions"
                                     item-value="id"
                                     item-text="name"
-                                    solo
-                                    dense
+                                    v-model="employeeInfo[field]"
                                     required
                                 ></v-select>
                                 <v-menu v-else-if="field === 'birth_of_date'"
@@ -63,7 +61,7 @@
                                         locale="ru"
                                     ></v-date-picker>
                                 </v-menu>
-                                <v-text-field v-else
+                                <v-text-field v-else-if="fields[field]"
                                     :label="fields[field]['text']"
                                     required
                                     v-model.trim.lazy="employeeInfo[field]"
@@ -106,8 +104,6 @@ export default {
         dialog: false,
         employeeInfo: {},
         datepicker: {
-            //date: new Date().toISOString().substr(0, 10),
-            //date: moment("19700101").format('YYYY-MM-DD'),
             menu: false,
             modal: false,
             menu2: false,
@@ -131,7 +127,7 @@ export default {
             }
         }
     },
-    created() {
+    mounted() {
         this.employeeInfo = {
             ...this.$props.employee,
             birth_of_date: moment(this.$props.employee['birth_of_date'], "DD.MM.YYYY").format('YYYY-MM-DD')

@@ -3,32 +3,8 @@ import axios from 'axios'
 import Swal from 'sweetalert2'
 
 const state = {
-    employees: [
-        {
-            id: 1,
-            name: 'Иванов Иван Иванович',
-            email: 'ivanovx12@gmail.com',
-            birth_of_date: '11.04.1983',
-            position_id: 1,
-            salary: 80000,
-        },
-        {
-            id: 5,
-            name: 'Петров Пётр Петрович',
-            email: 'petrov1254@mail.ru',
-            birth_of_date: '16.04.1988',
-            position_id: 5,
-            salary: 40000,
-        },
-        {
-            id: 8,
-            name: 'Сергеев Сергей Сергеевич',
-            email: 'serg213@gmail.com',
-            birth_of_date: '12.09.1991',
-            position_id: 2,
-            salary: 50000,
-        }
-    ],
+    employees: [],
+    positions: [],
     employeesFields: {
         name: { text: 'ФИО' },
         email: { text: 'Email' },
@@ -36,62 +12,111 @@ const state = {
         position_id: { text: 'Должность' },
         salary: { text: 'Зарплата' }
     },
-    positions: [
-        { id: 1, name: 'Технический директор'},
-        { id: 2, name: 'Web-Программист'},
-        { id: 3, name: 'Дизайнер' },
-        { id: 4, name: 'Тестировщик' },
-        { id: 5, name: 'Менеджер по продажам' },
-        { id: 6, name: 'Аккаунт-менеджер' },
-    ]
+    api: {
+        positions: '/api/positions',
+        employee: '/api/employee'
+    }
 }
 
 const getters = {
     employees: state => state.employees,
     employeesFields: state => state.employeesFields,
-    positions: state => state.positions
+    positions: state => state.positions,
+    api: state => state.api
 }
 
 const mutations = {
     setEmployees: (state, payload) => {
         state.employees = payload
+    },
+    setPositions: (state, payload) => {
+        state.positions = payload
     }
 }
 
 const actions = {
 
-    getEmployees(state, payload) {
-        axios.get('/api/users')
-    },
+    async getPositions(state, payload) {
 
-    createEmployee(state, payload) {
-        console.log('create', payload)
+        try {
+            const response = await axios.get(state.getters.api.positions)
 
-        for (let key in payload['data']) {
-            if (!payload['data'][key]) return;
+            if (response.status !== 200) throw new Error('Ошибка при запросе к серверу!')
+            if (!response.data.success || response.data.success !== 1) throw new Error('Ошибка на сервере!')
+
+            state.commit('setPositions', response.data.data)
+
+        }
+        catch (error) {
+            console.log(error)
         }
 
-        state.commit('setEmployees', [...state.getters.employees, { ...payload['data'], id: (new Date()).getTime() }])
-
-        payload.callback()
     },
 
-    updateEmployee(state, payload) {
-        console.log('update', payload)
+    async getEmployees(state, payload) {
 
-        for (let key in payload['data']) {
-            if (!payload['data'][key]) return;
+        try {
+            const response = await axios.get(state.getters.api.employee)
+
+            if (response.status !== 200) throw new Error('Ошибка при запросе к серверу!')
+            if (!response.data.success || response.data.success !== 1) throw new Error('Ошибка на сервере!')
+
+            state.commit('setEmployees', response.data.data)
+
+        }
+        catch (error) {
+            console.log(error)
         }
 
-        state.commit('setEmployees', state.getters.employees.map(u => {
-            if (u.id == payload['data'].id) {
-                u = { ...payload['data'] }
+    },
+
+    async createEmployee(state, payload) {
+
+        try {
+
+            for (let key in payload['data']) {
+                if (!payload['data'][key]) throw new Error(`Параметр "${key}" пуст!`);
             }
 
-            return u
-        }))
+            const response = await axios.post(state.getters.api.employee, { ...payload['data'] } )
 
-        payload.callback()
+            if (response.status !== 200) throw new Error('Ошибка при запросе к серверу!')
+            if (!response.data.success || response.data.success !== 1) throw new Error('Ошибка на сервере!')
+
+            await state.dispatch('getEmployees')
+
+            if (payload.callback && typeof(payload.callback) == 'function') payload.callback()
+
+
+        }
+        catch (error) {
+            console.log(error)
+        }
+
+    },
+
+    async updateEmployee(state, payload) {
+
+        try {
+
+            for (let key in payload['data']) {
+                if (!payload['data'][key]) throw new Error(`Параметр "${key}" пуст!`);
+            }
+
+            const response = await axios.patch(state.getters.api.employee, { ...payload['data'] } )
+
+            if (response.status !== 200) throw new Error('Ошибка при запросе к серверу!')
+            if (!response.data.success || response.data.success !== 1) throw new Error('Ошибка на сервере!')
+
+            await state.dispatch('getEmployees')
+
+            if (payload.callback && typeof(payload.callback) == 'function') payload.callback()
+
+
+        }
+        catch (error) {
+            console.log(error)
+        }
 
     },
 
@@ -111,9 +136,11 @@ const actions = {
             cancelButtonColor: '#d33',
             confirmButtonText: 'Да',
             cancelButtonText: 'Нет'
-        }).then((result) => {
+        }).then(async result => {
             if (!result.isConfirmed) return
-            state.commit('setEmployees', state.getters.employees.filter(u => u.id != payload.id))
+            await axios.delete(`${state.getters.api.employee}/${payload.id}`)
+
+            await state.dispatch('getEmployees')
         })
 
     }

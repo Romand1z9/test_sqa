@@ -28,6 +28,9 @@
                     </v-btn>
                 </v-toolbar>
             </template>
+            <template v-slot:item.position_id="{ item }">
+                {{ item.position }}
+            </template>
             <template v-slot:item.actions="{ item }">
                 <div class="icon-actions" :data-id="item.id">
                     <v-icon
@@ -101,6 +104,10 @@ export default {
             return this.$store.getters.positions
         }
     },
+    created() {
+        this.$store.dispatch('getEmployees')
+        this.$store.dispatch('getPositions')
+    },
     methods: {
         employeesTableClickHandler(e) {
 
@@ -139,7 +146,7 @@ export default {
             if (!employee) return
 
             this.modal['mode'] = 'edit'
-            this.modal['data'] = {...employee}
+            this.modal['data'] = { ...employee }
             this.modal['active'] = true
             return
 

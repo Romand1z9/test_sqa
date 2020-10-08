@@ -18,6 +18,10 @@ use Illuminate\Support\Facades\Route;
     return $request->user();
 });*/
 
-Route::get('users', function () {
-    return json_encode($_SERVER);
-});
+Route::get('positions', [\App\Http\Controllers\PositionController::class, 'getPositions']);
+
+Route::get('employee', [\App\Http\Controllers\EmployeeController::class, 'getEmployees']);
+Route::post('employee', [\App\Http\Controllers\EmployeeController::class, 'createEmployee']);
+Route::patch('employee', [\App\Http\Controllers\EmployeeController::class, 'updateEmployee']);
+Route::delete('employee/{id}', [\App\Http\Controllers\EmployeeController::class, 'deleteEmployee']);
+
