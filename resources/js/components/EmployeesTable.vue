@@ -117,6 +117,9 @@ export default {
     created() {
         this.$store.dispatch('getEmployees')
     },
+    beforeDestroy() {
+        this.$store.commit('setEmployees', [])
+    },
     methods: {
         employeesTableClickHandler(e) {
 

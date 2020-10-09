@@ -14,7 +14,8 @@ const state = {
     },
     api: {
         positions: '/api/positions',
-        employee: '/api/employee'
+        employee: '/api/employee',
+        login: '/api/admin/login',
     },
     loader: false
 }
@@ -39,6 +40,28 @@ const mutations = {
 }
 
 const actions = {
+
+    async login(state, payload) {
+
+        try {
+            const {login, password} = payload
+
+            const response = await axios.post(state.getters.api.login, { login, password })
+
+            if (response.status !== 200) throw new Error('Ошибка при запросе к серверу!')
+            if (response.data.error) throw new Error(response.data.error)
+
+            if (response.data.success && response.data.success !== 1) throw new Error('Ошибка на сервере!')
+
+            if (payload.callback && typeof(payload.callback) == 'function') payload.callback()
+
+        }
+        catch (error) {
+            showError(error.message)
+        }
+
+
+    },
 
     async getPositions(state, payload) {
 

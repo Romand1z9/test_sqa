@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('positions', [\App\Http\Controllers\PositionController::class, 'getPositions']);
 
+Route::post('admin/login', [\App\Http\Controllers\LoginController::class, 'login']);
+
 Route::get('employee', [\App\Http\Controllers\EmployeeController::class, 'getEmployees']);
 Route::post('employee', [\App\Http\Controllers\EmployeeController::class, 'createEmployee']);
 Route::patch('employee', [\App\Http\Controllers\EmployeeController::class, 'updateEmployee']);
