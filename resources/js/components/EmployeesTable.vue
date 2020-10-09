@@ -19,6 +19,16 @@
                     ></v-divider>
                     <v-spacer></v-spacer>
                     <v-btn
+                        color="#00BFA5"
+                        dark
+                        class="mb-2 mr-4"
+                        @click="$store.dispatch('getEmployees')"
+                    >
+                        <v-icon>
+                            mdi-refresh
+                        </v-icon>
+                    </v-btn>
+                    <v-btn
                         color="primary"
                         dark
                         class="mb-2"
@@ -106,7 +116,6 @@ export default {
     },
     created() {
         this.$store.dispatch('getEmployees')
-        this.$store.dispatch('getPositions')
     },
     methods: {
         employeesTableClickHandler(e) {

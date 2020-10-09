@@ -15,14 +15,15 @@ const state = {
     api: {
         positions: '/api/positions',
         employee: '/api/employee'
-    }
+    },
+    loader: false
 }
 
 const getters = {
     employees: state => state.employees,
     employeesFields: state => state.employeesFields,
     positions: state => state.positions,
-    api: state => state.api
+    api: state => state.api,
 }
 
 const mutations = {
@@ -31,6 +32,9 @@ const mutations = {
     },
     setPositions: (state, payload) => {
         state.positions = payload
+    },
+    setLoader: (state, payload) => {
+        state.loader = payload
     }
 }
 
@@ -42,13 +46,14 @@ const actions = {
             const response = await axios.get(state.getters.api.positions)
 
             if (response.status !== 200) throw new Error('Ошибка при запросе к серверу!')
-            if (!response.data.success || response.data.success !== 1) throw new Error('Ошибка на сервере!')
+            if (response.data.error) throw new Error(response.data.error)
+            if (response.data.success && response.data.success !== 1) throw new Error('Ошибка на сервере!')
 
             state.commit('setPositions', response.data.data)
 
         }
         catch (error) {
-            console.log(error)
+            showError(error.message)
         }
 
     },
@@ -59,18 +64,21 @@ const actions = {
             const response = await axios.get(state.getters.api.employee)
 
             if (response.status !== 200) throw new Error('Ошибка при запросе к серверу!')
-            if (!response.data.success || response.data.success !== 1) throw new Error('Ошибка на сервере!')
+            if (response.data.error) throw new Error(response.data.error)
+            if (response.data.success && response.data.success !== 1) throw new Error('Ошибка на сервере!')
 
             state.commit('setEmployees', response.data.data)
 
         }
         catch (error) {
-            console.log(error)
+            showError(error.message)
         }
 
     },
 
     async createEmployee(state, payload) {
+
+        const loader = showLoader('Идёт создание...' )
 
         try {
 
@@ -81,7 +89,21 @@ const actions = {
             const response = await axios.post(state.getters.api.employee, { ...payload['data'] } )
 
             if (response.status !== 200) throw new Error('Ошибка при запросе к серверу!')
-            if (!response.data.success || response.data.success !== 1) throw new Error('Ошибка на сервере!')
+
+            if (response.data.error && response.data.error_data) {
+
+                let error_data = '';
+
+                for (let e in response.data.error_data) {
+                    error_data += `<p> ${Object.values(response.data.error_data[e]).join("<br>")} </p>`
+                }
+
+                throw new Error(error_data)
+            }
+
+            if (response.data.error) throw new Error(response.data.error)
+
+            if (response.data.success && response.data.success !== 1) throw new Error('Ошибка на сервере!')
 
             await state.dispatch('getEmployees')
 
@@ -90,12 +112,17 @@ const actions = {
 
         }
         catch (error) {
-            console.log(error)
+            showError(error.message)
+        }
+        finally {
+            loader.close()
         }
 
     },
 
     async updateEmployee(state, payload) {
+
+        const loader = showLoader('Идёт обновление...' )
 
         try {
 
@@ -106,7 +133,20 @@ const actions = {
             const response = await axios.patch(state.getters.api.employee, { ...payload['data'] } )
 
             if (response.status !== 200) throw new Error('Ошибка при запросе к серверу!')
-            if (!response.data.success || response.data.success !== 1) throw new Error('Ошибка на сервере!')
+
+            if (response.data.error && response.data.error_data) {
+
+                let error_data = '';
+
+                for (let e in response.data.error_data) {
+                    error_data += `<br> ${Object.values(response.data.error_data[e]).join("<br>")}`
+                }
+
+                throw new Error(error_data)
+            }
+
+            if (response.data.error) throw new Error(response.data.error)
+            if (response.data.success && response.data.success !== 1) throw new Error('Ошибка на сервере!')
 
             await state.dispatch('getEmployees')
 
@@ -115,7 +155,10 @@ const actions = {
 
         }
         catch (error) {
-            console.log(error)
+            showError(error.message)
+        }
+        finally {
+            loader.close()
         }
 
     },
@@ -138,13 +181,53 @@ const actions = {
             cancelButtonText: 'Нет'
         }).then(async result => {
             if (!result.isConfirmed) return
-            await axios.delete(`${state.getters.api.employee}/${payload.id}`)
 
-            await state.dispatch('getEmployees')
+            const loader = showLoader('Идёт удаление...' )
+
+            try {
+
+                const response = await axios.delete(`${state.getters.api.employee}/${payload.id}`)
+
+                if (response.status !== 200) throw new Error('Ошибка при запросе к серверу!')
+                if (response.data.error) throw new Error(response.data.error)
+                if (response.data.success && response.data.success !== 1) throw new Error('Ошибка на сервере!')
+
+                await state.dispatch('getEmployees')
+            }
+            catch (error) {
+                showError(error.message)
+            }
+            finally {
+                loader.close()
+            }
+
         })
 
-    }
+    },
 
+}
+
+function showLoader(text) {
+
+    return Swal.fire({
+        position: 'center',
+        icon: 'info',
+        title: text ? text : 'Идёт обработка...',
+        allowOutsideClick: false,
+        timer: false,
+        willOpen: (val) => {
+            Swal.showLoading()
+        },
+    })
+
+}
+
+function showError(error = 'Ошибка') {
+    Swal.fire({
+        title: 'Ошибка!',
+        icon: 'error',
+        html: error.toString()
+    })
 }
 
 export default {

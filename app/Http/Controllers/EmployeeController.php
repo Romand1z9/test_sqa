@@ -36,17 +36,18 @@ class EmployeeController extends Controller
         $result = [];
 
         try {
-            $this->e_rep->addNew($request->only([
-                'name',
-                'email',
-                'salary',
-                'birth_of_date',
-                'position_id',
-            ]));
+            $this->e_rep->addNew($request->all());
             $result['success'] = 1;
         }
         catch (Exception $e) {
-            $result['error'] = $e->getMessage();
+
+            if ($e->getCode() === 777) {
+                $result['error'] = 'Некорректные данные!';
+                $result['error_data'] = json_decode($e->getMessage());
+            } else {
+                $result['error'] = $e->getMessage();
+            }
+
         }
 
         return response()->json($result);
@@ -58,14 +59,7 @@ class EmployeeController extends Controller
         $result = [];
 
         try {
-            $this->e_rep->updateEmployee($request->only([
-                'id',
-                'name',
-                'email',
-                'salary',
-                'birth_of_date',
-                'position_id',
-            ]));
+            $this->e_rep->updateEmployee($request->all());
             $result['success'] = 1;
         }
         catch (Exception $e) {

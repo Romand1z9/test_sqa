@@ -127,6 +127,9 @@ export default {
             }
         }
     },
+    created() {
+        this.$store.dispatch('getPositions')
+    },
     mounted() {
         this.employeeInfo = {
             ...this.$props.employee,
@@ -137,6 +140,7 @@ export default {
     },
     destroyed() {
         this.employeeInfo = {}
+        this.$store.commit('setPositions', [])
     },
     methods: {
         submitButtonHandler() {
